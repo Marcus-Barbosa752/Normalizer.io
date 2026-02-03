@@ -1,0 +1,46 @@
+@media (max-width: 900px) {
+    header section.Right {
+        display: none;
+    }
+    header .BtnToggleMenuFloatMobile {
+        width: 35px;
+        height: 20px;
+        border: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+    header .BtnToggleMenuFloatMobile span {
+        width: 100%;
+        height: 5px;
+        background: black;
+        border-radius: 20px;
+        transition: .4s ease-in-out;
+    }
+    header .BtnToggleMenuFloatMobile span:nth-child(2) {
+        width: 50%;
+    }
+    header .BtnToggleMenuFloatMobile span.ActiveSpanUmToggleMenuFloatMobile {
+        transform: rotate(-45deg) translate(-5px, 5px);
+    }
+    header .BtnToggleMenuFloatMobile span.ActiveSpanDoisToggleMenuFloatMobile {
+        width: 100%;
+        transform: rotate(45deg) translate(-5px, -5px);
+    }
+    section.PrintNome .InsertValue {
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+    }
+    section.PrintNome .InsertValue .CardText.User {
+        width: 80%;
+        margin-right: 50%;
+    }
+    section.PrintNome .InsertValue .CardText.Bot {
+        margin-left: -75px;
+    }
+    section.Input #ContainerInsertText {
+        width: 90%;
+    }
+}

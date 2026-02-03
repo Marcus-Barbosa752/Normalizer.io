@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Normalizer.io</title>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link rel="stylesheet" href="Assets/Style/Index.css">
+    <link rel="stylesheet" href="Assets/Style/Responsivo.css">
+    <link rel="shortcut icon" href="Assets/Icons/chatbot.png" type="image/x-icon">
+</head>
+<body>
+
+    <div class="MessageBox" id="MessageBox">Digite algo primeiro!</div>
+
+    <header>
+        <div class="Logo">
+            <img src="Assets/Icons/chatbot.png" alt="Icone de robô">
+            <span id="SpanNomeLogo">Normalizer.io</span>
+        </div>
+
+        <section class="Right">
+            <div class="Tema" id="ContainerTema">
+                <div class="Titulo" id="SelectTheme">
+                    <h4><i class="fi fi-sr-brightness" id="IStatusTemaIcon"></i><span id="SpanGetClassName">Tema</spa></h4>
+                    <i class="fi fi-sr-caret-down" id="IindicatoExpandTema"></i>
+                </div>
+
+                <button id="BtnSelectTheme" class="BtnThemeSelected"><i class="fi fi-sr-brightness" id="IgetClassName"></i><span id="SpanGetClassName">Claro</span></button>
+                <button id="BtnSelectTheme"><i class="fi fi-sr-moon" id="IgetClassName"></i><span id="SpanGetClassName">Escuro</span></button>
+            </div>
+
+            <button id="BtnHistorico" class="BtnHistorico"><i class="fi fi-sr-time-past"></i></button>
+            <button id="BtnCleanChat"><i class="fi fi-sr-broom"></i></button>
+        </section>
+
+        <button id="BtnToggleMenuFloatMobile" class="BtnToggleMenuFloatMobile">
+            <span id="SpanUmToggleMenuFloatMobile"></span>
+            <span id="SpanDoisToggleMenuFloatMobile"></span>
+        </button>
+    </header>
+
+    <section class="PrintNome">
+        <div id="InsertValue" class="InsertValue">
+            <h4 id="H4TitleChat">Mesmo bagunçado, seu nome sai do jeito certo.</h4>
+            <h3 id="H3SubTitleChat">Normalização inteligente de nomes..</h3>
+            <h4 id="H4MensagemChat">Pode bagunçar. Eu arrumo.</h4>
+            <button id="BtnTextoExemploChat">Exemplo</button>
+
+            <!--
+            <div class="CardText User">
+                <h2>Seu texto - Escrita</h2>
+                Lorem ipsum dolor sit amet
+            </div>
+
+            <div class="CardText Bot">
+                <h2>Resposta - Bot</h2>
+                Lorem ipsum dolor sit
+            </div>
+            -->
+        </div>
+    </section>
+    
+    <section class="Input">
+        <div id="ContainerInsertText">
+            <button id="BtnToggleUpload"><i id="ItagUpload" class="fi fi-sr-document-circle-arrow-up"></i></button>
+            <input type="text" id="InputTexto" placeholder="EXEMPLO: M 3a@ r c u s 2V i n i 5c i u s   A s s i s #D e   J e s u s!   B a r b o s a">
+            <button id="BtnEnviarTexto"><i class="fi fi-sr-arrow-small-right"></i></button>
+        </div>
+    </section>
+
+    <section class="Upload" id="Upload">
+        <button>Upload</button>
+        <h4>Ou arraste e solte</h4>
+    </section>
+
+    <script type="module" src="Assets/Javascript/Index.js"></script>
+    <script type="module" src="Assets/Javascript/Navegacao.js"></script>
+    <script src="Assets/Javascript/NavegacaoMobile.js"></script>
+</body>
+</html>
