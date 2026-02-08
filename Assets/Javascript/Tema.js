@@ -4,7 +4,7 @@ const Temas = {
         Color: "black"
     },
     Escuro: {
-        Background: "linear-gradient(to bottom, rgb(105, 105, 105), #5b335b)",
+        Background: "linear-gradient(to bottom, rgb(0, 0, 0), #5b335b)",
         Color: "white"
     }
 }
