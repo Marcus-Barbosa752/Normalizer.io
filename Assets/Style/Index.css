@@ -135,6 +135,7 @@ section.PrintNome {
     height: calc(100vh - 150px);
     display: grid;
     place-items: center;
+    overflow: hidden;
 }
 section.PrintNome .InsertValue {
     width: 60vw;
