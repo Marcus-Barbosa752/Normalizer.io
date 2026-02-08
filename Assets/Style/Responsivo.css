@@ -2,6 +2,7 @@
     header section.Right {
         display: none;
     }
+
     header .BtnToggleMenuFloatMobile {
         width: 35px;
         height: 20px;
@@ -10,7 +11,10 @@
         flex-direction: column;
         justify-content: space-between;
         align-items: flex-end;
+        background: none;
+        cursor: pointer;
     }
+
     header .BtnToggleMenuFloatMobile span {
         width: 100%;
         height: 5px;
@@ -18,28 +22,143 @@
         border-radius: 20px;
         transition: .4s ease-in-out;
     }
+
     header .BtnToggleMenuFloatMobile span:nth-child(2) {
         width: 50%;
     }
+
     header .BtnToggleMenuFloatMobile span.ActiveSpanUmToggleMenuFloatMobile {
         transform: rotate(-45deg) translate(-5px, 5px);
     }
+
     header .BtnToggleMenuFloatMobile span.ActiveSpanDoisToggleMenuFloatMobile {
         width: 100%;
         transform: rotate(45deg) translate(-5px, -5px);
     }
+
+    .MenuFloatMobile {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(to bottom, white, #a473a3);
+        display: grid;
+        grid-template-columns: calc(100vw - 160px) 100px;
+        grid-auto-rows: minmax(100px, 100px);
+        justify-content: space-between;
+        grid-gap: 20px;
+        padding: 20px;
+    }
+
+    .MenuFloatMobile .Card {
+        box-shadow: 0 0 10px black;
+        padding: 20px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+
+        /* ✅ importante pro dropdown absoluto não sumir */
+        position: relative;
+        overflow: visible;
+    }
+
+    .MenuFloatMobile .Card h4 {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 17px;
+    }
+
+    .MenuFloatMobile .Card i {
+        font-size: 20px;
+    }
+
+    .MenuFloatMobile .Card#CardTemaMobile {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .MenuFloatMobile .Card #ContainerTema div#SelectTheme {
+        width: 210px;
+        display: flex;
+        font-size: 17px;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* ====== Dropdown (Tema e Efeito Sonoro) corrigido e igual pros dois ====== */
+
+    /* Fecha por padrão (serve pro Tema e pro Efeito Sonoro) */
+    .MenuFloatMobile .Card .Tema nav {
+        display: none;
+    }
+
+    /* Abre quando o JS colocar .Expand na .Tema */
+    .MenuFloatMobile .Card .Tema.Expand nav {
+        display: grid;
+    }
+
+    /* Posição do dropdown (abaixo do título) */
+    .MenuFloatMobile .Card .Tema nav {
+        position: absolute;
+        left: 0;
+        top: calc(100% + 10px);
+        bottom: auto;
+        width: 100%;
+        z-index: 9999;
+
+        gap: 10px;
+        background: linear-gradient(to bottom, white, #a473a3);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px #a473a37c;
+    }
+
+    .MenuFloatMobile .Card #ContainerTema nav button {
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+        background: none;
+        font-size: 17px;
+        font-weight: bold;
+        border-radius: 10px;
+        box-shadow: 0 0 10px #a473a37c;
+        cursor: pointer;
+    }
+
+    .MenuFloatMobile .Card #ContainerTema nav button.BtnThemeSelected {
+        background: #a473a37c;
+        box-shadow: 0 0 10px #a473a37c;
+        cursor: not-allowed;
+    }
+
+    header .Tema button.BtnThemeSelected:hover {
+        background: #a473a3;
+    }
+
     section.PrintNome .InsertValue {
         width: 100%;
         justify-content: center;
         align-items: center;
     }
+
     section.PrintNome .InsertValue .CardText.User {
         width: 80%;
         margin-right: 50%;
     }
+
     section.PrintNome .InsertValue .CardText.Bot {
         margin-left: -75px;
     }
+
     section.Input #ContainerInsertText {
         width: 90%;
     }
