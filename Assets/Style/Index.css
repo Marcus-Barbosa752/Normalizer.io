@@ -6,6 +6,9 @@
     box-sizing: border-box;
     font-family: sans-serif;
 }
+.MenuFloatMobile {
+    display: none;
+}
 body {
     background: linear-gradient(to bottom, white, #a473a3);
     height: 100vh;
