@@ -1,4 +1,10 @@
 @media (max-width: 900px) {
+    .MessageBox {
+        width: 90vw;
+    }
+    header {
+        padding: 10px 20px;
+    }
     header section.Right {
         display: none;
     }
@@ -43,12 +49,16 @@
         width: 100vw;
         height: 100vh;
         background: linear-gradient(to bottom, white, #a473a3);
-        display: grid;
+        display: none;
         grid-template-columns: calc(100vw - 160px) 100px;
         grid-auto-rows: minmax(100px, 100px);
         justify-content: space-between;
         grid-gap: 20px;
         padding: 20px;
+    }
+    .MenuFloatMobile.AddMenuFloatMobile {
+        display: grid;
+        z-index: 1;
     }
 
     .MenuFloatMobile .Card {
@@ -161,5 +171,31 @@
 
     section.Input #ContainerInsertText {
         width: 90%;
+    }
+    .MenuFloatMobile footer {
+        width: 100%;
+        position: absolute;
+        bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+    }
+    .MenuFloatMobile footer button {
+        padding: 10px 20px;
+        background: none;
+        border: none;
+        box-shadow: 0 0 5px black;
+        font-size: 20px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        border-radius: 20px;
+    }
+    .MenuFloatMobile footer button:hover {
+        background: white;
+        color: black;
     }
 }
