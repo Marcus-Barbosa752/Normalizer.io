@@ -11,7 +11,7 @@
 }
 body {
     background: linear-gradient(to bottom, white, #a473a3);
-    height: 100vh;
+    height: 100dvh;
 }
 .MessageBox {
     position: absolute;
