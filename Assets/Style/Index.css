@@ -202,7 +202,10 @@ section.PrintNome .InsertValue .CardText h2 {
     font-size: 20px;
 }
 section.PrintNome .InsertValue .CardText.User {
-    margin-left: 70%;
+    margin-left: auto;
+    margin-right: 0;
+    max-width: 50%;
+    word-break: break-word;
 }
 section.PrintNome .InsertValue .CardText.Bot {
     background: black;
