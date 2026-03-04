@@ -11,7 +11,7 @@
 }
 body {
     background: linear-gradient(to bottom, white, #a473a3);
-    height: 100dvh;
+    height: 100vh;
 }
 .MessageBox {
     position: absolute;
@@ -173,7 +173,13 @@ section.PrintNome .InsertValue h3 {
     width: 100%;
     text-align: center;
 }
-section.PrintNome .InsertValue button {
+section.PrintNome .InsertValue nav {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+}
+section.PrintNome .InsertValue nav button {
     padding: 10px;
     border: none;
     background: white;
@@ -182,7 +188,7 @@ section.PrintNome .InsertValue button {
     border-radius: 10px;
     cursor: pointer;
 }
-section.PrintNome .InsertValue button:hover {
+section.PrintNome .InsertValue nav button:hover {
     background: black;
     color: white;
 }
