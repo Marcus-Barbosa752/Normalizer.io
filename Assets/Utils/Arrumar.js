@@ -1,61 +1,98 @@
+// CONFIGURAÇÕES
 const PREPOSICOES_D = new Set(["da", "de", "do", "dos", "das"])
 const NOMES_CURTOS = new Set(["ana", "zé", "ze"])
 
 const isLetter = (ch) => /\p{L}/u.test(ch)
 
-const normalizarNome = (input = "") => {
-    if (typeof input !== "string") return ""
+// NORMALIZAÇÃO
+function normalizarNome(input) {
+    // 1️⃣ Remove tudo que não é letra (ignora espaços como ruído)
+    let texto = input.replace(/[^\p{L}]/gu, "")
 
-    const palavras = []
-    let atual = ""
-    let teveRuido = false
+    // 2️⃣ Aqui entra SEU algoritmo validado de reconstrução
+    texto = reconstruirPorContexto(texto)
 
-    const flush = () => {
-        if (atual) palavras.push(atual)
-        atual = ""
+    // 3️⃣ Se for palavra única curta → pode estar invertida
+    if (!texto.includes(" ") && texto.length <= 6) {
+        const invertida = texto.split("").reverse().join("")
+
+        if (avaliarQualidade(invertida) > avaliarQualidade(texto)) {
+            texto = invertida
+        }
     }
 
-    for (let i = 0; i < input.length; i++) {
-        const ch = input[i]
+    return texto
+}
 
-        if (isLetter(ch)) {
-            const isUpperOriginal = ch === ch.toLocaleUpperCase("pt-BR")
+function reconstruirPorContexto(texto) {
+    if (!texto) return ""
 
-            if (atual && teveRuido) {
-                const lowerAtual = atual.toLocaleLowerCase("pt-BR")
+    // 🔹 Conta quantas maiúsculas existem no texto original
+    const maiusculas = [...texto].filter(l =>
+        l === l.toLocaleUpperCase("pt-BR") &&
+        l !== l.toLocaleLowerCase("pt-BR")
+    ).length
 
-                // 1) Se a palavra atual é preposição, qualquer ruído antes da próxima letra separa
-                if (PREPOSICOES_D.has(lowerAtual)) {
-                    flush()
-                }
-                // 2) Se a próxima letra é maiúscula no original, pode ser nova palavra
-                else if (isUpperOriginal) {
-                    // evita quebrar "MarCus" (curto demais) mas separa nomes completos
-                    if (atual.length >= 4 || NOMES_CURTOS.has(lowerAtual)) {
-                        flush()
-                    }
-                }
-            }
+    // 👉 Se tiver 0 ou 1 maiúscula → tratar como palavra única
+    if (maiusculas <= 1) {
+        const lower = texto.toLocaleLowerCase("pt-BR")
 
-            atual += ch.toLocaleLowerCase("pt-BR")
-            teveRuido = false
-            continue
+        return (
+            lower[0].toLocaleUpperCase("pt-BR") +
+            lower.slice(1)
+        )
+    }
+
+    // 🔹 Caso contrário, aplica reconstrução por transição
+    let palavras = []
+    let atual = ""
+
+    for (let i = 0; i < texto.length; i++) {
+        const letra = texto[i]
+        const anterior = texto[i - 1]
+
+        const ehMaiuscula =
+            letra === letra.toLocaleUpperCase("pt-BR") &&
+            letra !== letra.toLocaleLowerCase("pt-BR")
+
+        const anteriorEhMinuscula =
+            anterior &&
+            anterior === anterior.toLocaleLowerCase("pt-BR")
+
+        if (i > 0 && ehMaiuscula && anteriorEhMinuscula) {
+            palavras.push(atual)
+            atual = letra
+        }else {
+            atual += letra;
+        }
+    }
+
+    if (atual) palavras.push(atual)
+
+    palavras = palavras.map(p => {
+        const lower = p.toLocaleLowerCase("pt-BR")
+
+        if (PREPOSICOES_D.has(lower)) {
+            return "D" + lower.slice(1)
         }
 
-        // tudo que não é letra é ruído (inclui espaços, números, símbolos)
-        teveRuido = true
-    }
+        return (
+            lower[0].toLocaleUpperCase("pt-BR") +
+            lower.slice(1)
+        )
+    })
 
-    flush()
+    return palavras.join(" ")
+}
 
-    // capitaliza final + Da/De/Do/Dos/Das com D maiúsculo
-    return palavras
-        .map(p => p.toLocaleLowerCase("pt-BR"))
-        .map(p => {
-            if (PREPOSICOES_D.has(p)) return "D" + p.slice(1)
-            return p[0].toLocaleUpperCase("pt-BR") + p.slice(1)
-        })
-        .join(" ")
+function avaliarQualidade(str) {
+    const vogais = (str.match(/[aeiouáéíóúãõâêîôû]/gi) || []).length
+    const consoantes = str.length - vogais
+
+    // Penaliza excesso de consoante no final
+    const penalidadeFinal = /[^aeiouáéíóúãõ]$/i.test(str) ? -1 : 0
+
+    return vogais * 2 - consoantes + penalidadeFinal
 }
 
 const estaNormalizado = (input = "") => {
@@ -64,7 +101,6 @@ const estaNormalizado = (input = "") => {
     const s = input.trim()
     if (!s) return false
 
-    // apenas letras (com acentos) e espaços simples
     if (!/^[\p{L}]+(?: [\p{L}]+)*$/u.test(s)) return false
 
     const palavras = s.split(" ")
@@ -72,13 +108,11 @@ const estaNormalizado = (input = "") => {
     for (const p of palavras) {
         const lower = p.toLocaleLowerCase("pt-BR")
 
-        // Da / De / Do / Dos / Das com D maiúsculo
         if (PREPOSICOES_D.has(lower)) {
             if (p !== "D" + lower.slice(1)) return false
             continue
         }
 
-        // Title Case normal
         const esperado =
             p[0].toLocaleUpperCase("pt-BR") +
             p.slice(1).toLocaleLowerCase("pt-BR")
@@ -89,15 +123,103 @@ const estaNormalizado = (input = "") => {
     return true
 }
 
-// ✅ Função “wrapper”: só normaliza se precisar
-const NormalizarOuAvisar = (nome = "") => {
-    if (estaNormalizado(nome)) {
-        return "Já está normalizado, não foi preciso normalizar!"
+// PROCESSADOR COMPLETO
+function processarNome(nome) {
+    if (!nome || typeof nome !== "string") {
+        return {
+            valorFinal: "",
+            invertidoDetectado: false,
+            jaEstavaNormalizado: false,
+            valido: false
+        }
     }
 
-    return normalizarNome(nome)
+    // 🔹 Função auxiliar para remover repetição exagerada
+    const removerRepeticoes = (str) => {
+        // remove 3 ou mais repetições
+        str = str.replace(/(\p{L})\1{2,}/gu, "$1")
+    
+        // 🔥 remove repetição dupla no INÍCIO da palavra
+        str = str.replace(/^(\p{L})\1+/u, "$1")
+    
+        return str
+    }
+
+    // 🔹 Primeiro testa normal
+    const normalOriginal = removerRepeticoes(
+        normalizarNome(nome)
+    )
+
+    // 🔹 Inverte PRIMEIRO o texto cru
+    const invertidoTexto = [...nome].reverse().join("")
+
+    // 🔹 Depois normaliza
+    const normalInvertido = removerRepeticoes(
+        normalizarNome(invertidoTexto)
+    )
+
+    // 🔹 Score inteligente
+    const score = (str) => {
+        if (!str) return 0
+    
+        let pontos = 0
+        const palavras = str.split(" ")
+    
+        for (let p of palavras) {
+    
+            if (p.length >= 4) pontos += 3
+            else if (p.length === 3) pontos += 2
+            else if (p.length === 2) pontos += 1
+            else pontos -= 2
+    
+            // 🔹 Penaliza final raro (ld, dl, etc)
+            if (/[bcdfghjklmnpqrstvwxyz]{2}$/i.test(p))
+                pontos -= 3
+    
+            // 🔹 Bonifica final comum brasileiro
+            if (/(an|ão|el|as|os|es|is)$/i.test(p))
+                pontos += 2
+        }
+    
+        return pontos
+    }
+
+    const scoreA = score(normalOriginal)
+    const scoreB = score(normalInvertido)
+
+    const usarInvertido = scoreB > scoreA
+
+    let valorFinal = usarInvertido ? normalInvertido : normalOriginal
+
+    if (!valorFinal.includes(" ") && valorFinal.length <= 6) {
+
+        const candidato = valorFinal.slice(1)
+    
+        const scoreLocal = (str) => {
+            const vogais = (str.match(/[aeiouáéíóúãõ]/gi) || []).length
+            return vogais * 2 - str.length
+        }
+    
+        if (scoreLocal(candidato) > scoreLocal(valorFinal)) {
+            valorFinal = candidato
+        }
+    
+        // capitaliza corretamente
+        valorFinal =
+            valorFinal[0].toLocaleUpperCase("pt-BR") +
+            valorFinal.slice(1).toLocaleLowerCase("pt-BR")
+    }
+
+    return {
+        valorFinal,
+        invertidoDetectado: usarInvertido,
+        jaEstavaNormalizado: estaNormalizado(nome),
+        valido: valorFinal.length >= 3
+    }
 }
 
-const Normalizar = (Valor) => NormalizarOuAvisar(Valor)
-
-export { Normalizar }
+export {
+    normalizarNome,
+    estaNormalizado,
+    processarNome
+}
