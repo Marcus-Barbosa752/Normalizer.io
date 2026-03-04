@@ -26,7 +26,10 @@ BtnCleanChatMobile.onclick = () => {
     <h4 id="H4TitleChat">Mesmo bagunçado, seu nome sai do jeito certo.</h4>
     <h3 id="H3SubTitleChat">Normalização inteligente de nomes..</h3>
     <h4 id="H4MensagemChat">Pode bagunçar. Eu arrumo.</h4>
-    <button id="BtnTextoExemploChat">Exemplo</button>
+    <nav>
+        <button id="BtnTextoExemploChat">Exemplo único</button>
+        <button id="BtnTextoExemploMultiploChat">Exemplo múltiplo</button>
+    </nav>
     `
 
     document.getElementById("BtnTextoExemploChat").onclick = () => Exemplo_Chat()
