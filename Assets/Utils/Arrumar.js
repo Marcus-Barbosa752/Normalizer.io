@@ -1,225 +1,164 @@
-// CONFIGURAÇÕES
-const PREPOSICOES_D = new Set(["da", "de", "do", "dos", "das"])
-const NOMES_CURTOS = new Set(["ana", "zé", "ze"])
+const PREPOSICOES_D = new Set(["da","de","do","dos","das"])
+const RE_VOGAIS = /[aeiouáéíóúãõâêîôû]/gi
 
-const isLetter = (ch) => /\p{L}/u.test(ch)
-
-// NORMALIZAÇÃO
-function normalizarNome(input) {
-    // 1️⃣ Remove tudo que não é letra (ignora espaços como ruído)
-    let texto = input.replace(/[^\p{L}]/gu, "")
-
-    // 2️⃣ Aqui entra SEU algoritmo validado de reconstrução
-    texto = reconstruirPorContexto(texto)
-
-    // 3️⃣ Se for palavra única curta → pode estar invertida
-    if (!texto.includes(" ") && texto.length <= 6) {
-        const invertida = texto.split("").reverse().join("")
-
-        if (avaliarQualidade(invertida) > avaliarQualidade(texto)) {
-            texto = invertida
+function limparSpamLetras(str){
+    if(!str) return { texto: "", tinhaSpamInicio: false, letraSpamInicio: null }
+    let tinhaSpamInicio = false
+    let letraSpamInicio = null
+    const texto = str.replace(/(\p{L})\1{3,}/giu, (match, letra, offset) => {
+        if(offset === 0){
+            tinhaSpamInicio = true
+            letraSpamInicio = letra.toUpperCase()
         }
-    }
+        return letra
+    })
+    return { texto, tinhaSpamInicio, letraSpamInicio }
+}
 
+function limparTextoBase(texto){
+    texto = texto.replace(/[^\p{L}]/gu," ")
+    texto = texto.replace(/\s+/g," ").trim()
     return texto
 }
 
-function reconstruirPorContexto(texto) {
-    if (!texto) return ""
-
-    // 🔹 Conta quantas maiúsculas existem no texto original
-    const maiusculas = [...texto].filter(l =>
-        l === l.toLocaleUpperCase("pt-BR") &&
-        l !== l.toLocaleLowerCase("pt-BR")
-    ).length
-
-    // 👉 Se tiver 0 ou 1 maiúscula → tratar como palavra única
-    if (maiusculas <= 1) {
-        const lower = texto.toLocaleLowerCase("pt-BR")
-
-        return (
-            lower[0].toLocaleUpperCase("pt-BR") +
-            lower.slice(1)
-        )
+function juntarLetrasSeparadas(texto){
+    const partes = texto.split(" ").filter(Boolean)
+    const letras = partes.filter(p=>p.length===1)
+    if(letras.length >= partes.length*0.6){
+        return partes.join("")
     }
-
-    // 🔹 Caso contrário, aplica reconstrução por transição
-    let palavras = []
-    let atual = ""
-
-    for (let i = 0; i < texto.length; i++) {
-        const letra = texto[i]
-        const anterior = texto[i - 1]
-
-        const ehMaiuscula =
-            letra === letra.toLocaleUpperCase("pt-BR") &&
-            letra !== letra.toLocaleLowerCase("pt-BR")
-
-        const anteriorEhMinuscula =
-            anterior &&
-            anterior === anterior.toLocaleLowerCase("pt-BR")
-
-        if (i > 0 && ehMaiuscula && anteriorEhMinuscula) {
-            palavras.push(atual)
-            atual = letra
-        }else {
-            atual += letra;
-        }
-    }
-
-    if (atual) palavras.push(atual)
-
-    palavras = palavras.map(p => {
-        const lower = p.toLocaleLowerCase("pt-BR")
-
-        if (PREPOSICOES_D.has(lower)) {
-            return "D" + lower.slice(1)
-        }
-
-        return (
-            lower[0].toLocaleUpperCase("pt-BR") +
-            lower.slice(1)
-        )
-    })
-
-    return palavras.join(" ")
+    return texto
 }
 
-function avaliarQualidade(str) {
-    const vogais = (str.match(/[aeiouáéíóúãõâêîôû]/gi) || []).length
-    const consoantes = str.length - vogais
-
-    // Penaliza excesso de consoante no final
-    const penalidadeFinal = /[^aeiouáéíóúãõ]$/i.test(str) ? -1 : 0
-
-    return vogais * 2 - consoantes + penalidadeFinal
+function reconstruirSequenciaDeLetras(texto){
+    const partes = texto.split(" ")
+    if(partes.every(p=>p.length===1)){
+        const nome = partes.join("")
+        if(nome.length>=6){
+            const meio = Math.floor(nome.length/2)
+            return nome.slice(0,meio) + " " + nome.slice(meio)
+        }
+    }
+    return texto
 }
 
-const estaNormalizado = (input = "") => {
-    if (typeof input !== "string") return false
+function limparSufixoRuido(texto){
+    return texto.replace(/(\p{L})\1{2,}$/giu,"$1")
+}
 
-    const s = input.trim()
-    if (!s) return false
+function reconstruirNomeCurto(partes){
+    if(partes.length===2){
+        const [a, b] = partes
+        const aTemVogal = /[aeiouáéíóúãõâêîôû]/i.test(a)
+        const bTemVogal = /[aeiouáéíóúãõâêîôû]/i.test(b)
 
-    if (!/^[\p{L}]+(?: [\p{L}]+)*$/u.test(s)) return false
+        // Descarta bloco multi-char sem vogal (ex: "Ld", "St") — ruído de consonantes
+        if(!bTemVogal && b.length >= 2) return [a]
+        if(!aTemVogal && a.length >= 2) return [b]
 
-    const palavras = s.split(" ")
+        // FIX: descarta consonante MINÚSCULA isolada (ex: "d" de dLuan — noise de spam)
+        // mas MANTÉM consonante MAIÚSCULA isolada (ex: "P" de "orde P" — inicial real do nome)
+        if(!bTemVogal && b.length === 1 && b === b.toLowerCase()) return [a]
+        if(!aTemVogal && a.length === 1 && a === a.toLowerCase()) return [b]
 
-    for (const p of palavras) {
-        const lower = p.toLocaleLowerCase("pt-BR")
+        const tentativa = partes.join("")
+        if(aTemVogal && bTemVogal && tentativa.length<=5) return [tentativa]
+    }
+    return partes
+}
 
-        if (PREPOSICOES_D.has(lower)) {
-            if (p !== "D" + lower.slice(1)) return false
-            continue
-        }
+function separarCamelCase(str){
+    return str.replace(/([a-zà-ÿ])([A-Z])/g,"$1 $2")
+}
 
-        const esperado =
-            p[0].toLocaleUpperCase("pt-BR") +
-            p.slice(1).toLocaleLowerCase("pt-BR")
+function separarBlocosMaiusculos(str){
+    const grupos = str.match(/[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ]{3,}/g)
+    if(!grupos) return str
+    if(grupos.length>=2) return grupos.join(" ")
+    return str
+}
 
-        if (p !== esperado) return false
+function capitalizarPalavra(p){
+    const lower = p.toLocaleLowerCase("pt-BR")
+    if(PREPOSICOES_D.has(lower)) return lower
+    return lower[0].toUpperCase() + lower.slice(1)
+}
+
+function normalizarNome(input, tinhaSpamInicio = false, letraSpamInicio = null){
+    let texto = String(input ?? "")
+    texto = limparTextoBase(texto)
+    texto = juntarLetrasSeparadas(texto)
+    texto = reconstruirSequenciaDeLetras(texto)
+    texto = limparSufixoRuido(texto)
+    texto = separarCamelCase(texto)
+    texto = separarBlocosMaiusculos(texto)
+
+    // Remove prefixo espúrio de spam apenas quando o texto ainda é todo maiúsculo
+    // Ex: "AJOAO SILVA" → remove A. Mas "Gustavo" (mixed case) → não remove G.
+    if(tinhaSpamInicio && letraSpamInicio && texto === texto.toUpperCase()){
+        texto = texto.replace(/^(\p{L})(?!\1)(?=\p{L}{2,})/u, "")
     }
 
+    let partes = texto.split(/\s+/).filter(Boolean)
+    partes = reconstruirNomeCurto(partes)
+    partes = partes.map(capitalizarPalavra)
+    return partes.join(" ")
+}
+
+function estaNormalizado(input=""){
+    if(typeof input!=="string") return false
+    const s=input.trim()
+    if(!s) return false
+    if(!/^[\p{L}]+(?: [\p{L}]+)*$/u.test(s)) return false
+    const palavras=s.split(" ")
+    for(const p of palavras){
+        const esperado=p[0].toUpperCase()+p.slice(1).toLowerCase()
+        if(p!==esperado) return false
+    }
     return true
 }
 
-// PROCESSADOR COMPLETO
-function processarNome(nome) {
-    if (!nome || typeof nome !== "string") {
-        return {
-            valorFinal: "",
-            invertidoDetectado: false,
-            jaEstavaNormalizado: false,
-            valido: false
-        }
+// FIX: adiciona bônus por total de letras (resultado mais longo é mais completo)
+// Isso corrige o desempate Nau(3) vs Luan(4) → mesmo score base, Luan tem +1 letra
+function avaliarQualidade(str){
+    RE_VOGAIS.lastIndex = 0
+    const totalLetras = str.replace(/\s/g,"").length
+    const vogais = (str.match(RE_VOGAIS)||[]).length
+    const consoantes = totalLetras - vogais
+    const letrasIsoladas = str.split(" ").filter(p=>p.length===1).length
+    return vogais*2 - consoantes - letrasIsoladas*2 + totalLetras
+}
+
+function processarNome(nome){
+    if(!nome||typeof nome!=="string"){
+        return{ valorFinal:"", invertidoDetectado:false, jaEstavaNormalizado:false, valido:false }
     }
 
-    // 🔹 Função auxiliar para remover repetição exagerada
-    const removerRepeticoes = (str) => {
-        // remove 3 ou mais repetições
-        str = str.replace(/(\p{L})\1{2,}/gu, "$1")
-    
-        // 🔥 remove repetição dupla no INÍCIO da palavra
-        str = str.replace(/^(\p{L})\1+/u, "$1")
-    
-        return str
-    }
+    const { texto: textoLimpo, tinhaSpamInicio, letraSpamInicio } = limparSpamLetras(nome)
+    const normalOriginal = normalizarNome(textoLimpo, tinhaSpamInicio, letraSpamInicio)
 
-    // 🔹 Primeiro testa normal
-    const normalOriginal = removerRepeticoes(
-        normalizarNome(nome)
-    )
-
-    // 🔹 Inverte PRIMEIRO o texto cru
     const invertidoTexto = [...nome].reverse().join("")
+    const { texto: invLimpo, tinhaSpamInicio: invSpam, letraSpamInicio: invLetra } = limparSpamLetras(invertidoTexto)
+    const normalInvertido = normalizarNome(invLimpo, invSpam, invLetra)
 
-    // 🔹 Depois normaliza
-    const normalInvertido = removerRepeticoes(
-        normalizarNome(invertidoTexto)
-    )
+    const scoreA = avaliarQualidade(normalOriginal)
+    const scoreB = avaliarQualidade(normalInvertido)
 
-    // 🔹 Score inteligente
-    const score = (str) => {
-        if (!str) return 0
-    
-        let pontos = 0
-        const palavras = str.split(" ")
-    
-        for (let p of palavras) {
-    
-            if (p.length >= 4) pontos += 3
-            else if (p.length === 3) pontos += 2
-            else if (p.length === 2) pontos += 1
-            else pontos -= 2
-    
-            // 🔹 Penaliza final raro (ld, dl, etc)
-            if (/[bcdfghjklmnpqrstvwxyz]{2}$/i.test(p))
-                pontos -= 3
-    
-            // 🔹 Bonifica final comum brasileiro
-            if (/(an|ão|el|as|os|es|is)$/i.test(p))
-                pontos += 2
-        }
-    
-        return pontos
-    }
+    // Desempate por comprimento: se scores iguais, prefere o resultado MAIS LONGO
+    // (mais letras = menos informação descartada durante a limpeza)
+    // Ex: Nau(3) vs Luan(4) → score igual → Luan ganha por comprimento
+    // Ex: Joao Silva(9) vs Avlis Oaoj(9) → score igual, comprimento igual → original ganha
+    const lenA = normalOriginal.replace(/\s/g,"").length
+    const lenB = normalInvertido.replace(/\s/g,"").length
+    const usarInvertido = scoreB > scoreA || (scoreB === scoreA && lenB > lenA)
+    const valorFinal = usarInvertido ? normalInvertido : normalOriginal
 
-    const scoreA = score(normalOriginal)
-    const scoreB = score(normalInvertido)
-
-    const usarInvertido = scoreB > scoreA
-
-    let valorFinal = usarInvertido ? normalInvertido : normalOriginal
-
-    if (!valorFinal.includes(" ") && valorFinal.length <= 6) {
-
-        const candidato = valorFinal.slice(1)
-    
-        const scoreLocal = (str) => {
-            const vogais = (str.match(/[aeiouáéíóúãõ]/gi) || []).length
-            return vogais * 2 - str.length
-        }
-    
-        if (scoreLocal(candidato) > scoreLocal(valorFinal)) {
-            valorFinal = candidato
-        }
-    
-        // capitaliza corretamente
-        valorFinal =
-            valorFinal[0].toLocaleUpperCase("pt-BR") +
-            valorFinal.slice(1).toLocaleLowerCase("pt-BR")
-    }
-
-    return {
+    return{
         valorFinal,
         invertidoDetectado: usarInvertido,
         jaEstavaNormalizado: estaNormalizado(nome),
-        valido: valorFinal.length >= 3
+        valido: valorFinal.length>=3
     }
 }
 
-export {
-    normalizarNome,
-    estaNormalizado,
-    processarNome
-}
+export { normalizarNome, estaNormalizado, processarNome }
